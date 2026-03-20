@@ -1,34 +1,25 @@
 {
-	"schemaVersion": 1,
-	"id": "blockend",
-	"version": "${version}",
-	"name": "BlockEnd",
-	"description": "This is an example description! Tell everyone what your mod is about!",
-	"authors": [
-		"Me!"
-	],
-	"contact": {
-		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
-	},
-	"license": "CC0-1.0",
-	"icon": "assets/blockend/icon.png",
-	"environment": "*",
-	"entrypoints": {
-		"main": [
-          "xyz.memothelemo.blockend.BlockEnd"
-		]
-	},
-	"mixins": [
-		"blockend.mixins.json"
-	],
-	"depends": {
-		"fabricloader": ">=0.17.3",
-		"minecraft": "~1.21.9",
-		"java": ">=21",
-		"fabric-api": "*"
-	},
-	"suggests": {
-		"another-mod": "*"
-	}
+  "schemaVersion": 1,
+  "id": "${id}",
+  "version": "${version}",
+  "name": "${name}",
+  "description": "",
+  "authors": [],
+  "contact": {},
+  "license": "MIT",
+  "icon": "assets/blockend/icon.png",
+  "environment": "server",
+  "entrypoints": {
+    "main": [
+      "xyz.memothelemo.blockend.BlockEndMod"
+    ]
+  },
+  "mixins": [
+    "blockend.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=${fabric_loader_version}",
+    "fabric-api": "*",
+    "minecraft": "${minecraft_version}"
+  }
 }

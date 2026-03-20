@@ -11,16 +11,33 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import xyz.memothelemo.blockend.BlockEnd;
+import xyz.memothelemo.blockend.BlockEndMod;
 
 @Mixin(EndPortalBlock.class)
 public class EndPortalBlockMixin {
-    @Inject(method = "entityInside", at = @At("HEAD"), cancellable = true)
-    private void blockTeleportation(BlockState state, Level level, BlockPos pos, Entity entity, InsideBlockEffectApplier applier, boolean intersects, CallbackInfo ci) {
-        if (level.dimension() == Level.END || !BlockEnd.ENABLED) return;
+    @Inject(method = "entityInside", at = @At("HEAD"))
+    private void onEntityTouched(
+            BlockState blockState,
+            Level level,
+            BlockPos blockPos,
+            Entity entity,
+            InsideBlockEffectApplier insideBlockEffectApplier,
+            boolean intersects,
+            CallbackInfo ci
+    ) {
         if (entity instanceof ServerPlayer player) {
-            BlockEnd.sendAlertMessage(player);
-            ci.cancel();
+            BlockEndMod.sendAlertMessage(player);
+            return;
+        }
+
+        // Our good friend discovered a fatal bug in this mod where any passengers
+        // can go to the End dimension with a horse or any vehicle.
+        //
+        // Find the associated player and tell them that it is still blocked. >:3
+        for (Entity passenger: entity.getPassengers()) {
+            if (passenger instanceof ServerPlayer player) {
+                BlockEndMod.sendAlertMessage(player);
+            }
         }
     }
 }

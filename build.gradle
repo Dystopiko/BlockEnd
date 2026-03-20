@@ -1,121 +1,86 @@
 plugins {
-	id 'fabric-loom' version "${loom_version}"
-	id 'maven-publish'
+    alias(libs.plugins.loom)
+    id("maven-publish")
 }
 
-version = project.mod_version
-group = project.maven_group
+def modName = project.property("mod_name").toString()
+def modId = modName.toLowerCase()
+def modVersion = project.property("mod_version").toString()
+def mavenGroup = project.property("maven_group").toString()
 
-base {
-	archivesName = project.archives_base_name
-}
+base.archivesName.set(modId)
+version = modVersion
+group = mavenGroup
 
 repositories {
-	// Add repositories to retrieve artifacts from in here.
-	// You should only use this when depending on other mods because
-	// Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
-	// See https://docs.gradle.org/current/userguide/declaring_repositories.html
-	// for more information about repositories.
-    maven {
-        name = 'ParchmentMC'
-        url = 'https://maven.parchmentmc.org'
-    }
-}
-
-loom {
-	splitEnvironmentSourceSets()
-
-	mods {
-		"blockend" {
-			sourceSet sourceSets.main
-			sourceSet sourceSets.client
-		}
-	}
-
+    mavenCentral()
+    mavenLocal()
 }
 
 dependencies {
-	// To change the versions see the gradle.properties file
-	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-    mappings loom.layered() {
-        officialMojangMappings()
-        parchment("org.parchmentmc.data:parchment-${project.parchment_mappings_version}@zip")
-    }
+    // To change the versions, see at `libs.versions.toml` file
+    // Fabric
+    minecraft(libs.minecraft)
+    mappings(loom.officialMojangMappings())
+    modImplementation(libs.fabric.loader)
 
-	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
-	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+    // Fabric API
+    modImplementation(libs.fabric.api)
 
-    modImplementation include("com.github.ben-manes.caffeine:caffeine:3.2.2")
-}
+    // Caffeine
+    include(libs.caffeine)
+    modImplementation(libs.caffeine)
 
-processResources {
-	inputs.property "version", project.version
-
-	filesMatching("fabric.mod.json") {
-		expand "version": inputs.properties.version
-	}
-}
-
-tasks.register("release") {
-    group = "build"
-    description = "Builds the mod for release"
-
-    dependsOn "build"
-
-    doLast {
-        def versionName = project.version
-        def buildFile = tasks.jar.archiveFile.get().asFile
-
-        def releaseDir = layout.buildDirectory.dir("release").get().asFile
-        releaseDir.mkdirs()
-
-        def releaseFile = new File(releaseDir, "${project.name}-${versionName}.jar")
-        copy {
-            from buildFile
-            into releaseDir
-            rename { releaseFile.name }
-        }
-
-        println "Release build created: ${releaseFile}"
-    }
+    // Adventure
+    include(libs.adventure.api)
+    include(libs.adventure.fabric)
+    modImplementation(libs.adventure.api)
+    modImplementation(libs.adventure.fabric)
 }
 
 tasks.withType(JavaCompile).configureEach {
-	it.options.release = 21
+    // ensure that the encoding is set to UTF-8, no matter what the system default is
+    // this fixes some edge cases with special characters not displaying correctly
+    // see http://yodaconditions.net/blog/fix-for-java-file-encoding-problems-with-gradle.html
+    // If Javadoc is generated, this must be specified in that task too.
+    options.encoding = "UTF-8"
+    options.release.set(21)
+}
+
+tasks.named("processResources") {
+    inputs.property("id", modId)
+    inputs.property("name", modName)
+    inputs.property("version", modVersion)
+
+    filteringCharset = "UTF-8"
+    filesMatching('fabric.mod.json') {
+        expand([
+            id: modId,
+            name: modName,
+            version: modVersion,
+            fabric_loader_version: libs.versions.fabric.loader.get(),
+            minecraft_version: libs.versions.minecraft.get()
+        ])
+    }
+}
+
+tasks.named("jar") {
+    from("LICENSE")
 }
 
 java {
-	// Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
-	// if it is present.
-	// If you remove this line, sources will not be generated.
-	withSourcesJar()
-
-	sourceCompatibility = JavaVersion.VERSION_21
-	targetCompatibility = JavaVersion.VERSION_21
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+    withSourcesJar()
 }
 
-jar {
-	inputs.property "archivesName", project.base.archivesName
-
-	from("LICENSE") {
-		rename { "${it}_${inputs.properties.archivesName}"}
-	}
-}
-
-// configure the maven publication
 publishing {
-	publications {
-		create("mavenJava", MavenPublication) {
-			artifactId = project.archives_base_name
-			from components.java
-		}
-	}
+    publications {
+        mavenJava(MavenPublication) {
+            from(components["java"])
+        }
+    }
 
-	// See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
-	repositories {
-		// Add repositories to publish to here.
-		// Notice: This block does NOT have the same function as the block in the top level.
-		// The repositories here will be used for publishing your artifact, not for
-		// retrieving dependencies.
-	}
+    // select the repositories you want to publish to
+    repositories {}
 }
