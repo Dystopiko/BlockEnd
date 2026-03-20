@@ -14,6 +14,11 @@ public class MinecraftServerMixin {
     public void removeEndDimension(CallbackInfoReturnable<Boolean> cir) {
         if (cir.getReturnValue() == false) return;
 
+        // Unlike the earlier BlockEnd version, this code stops any entity or player
+        // from entering the End dimension by removing it from the server entirely.
+        // This follows the same approach used by Spigot.
+        //
+        // This technique will not crash the entire server. It will remain as it is.
         MinecraftServerAccessor server = (MinecraftServerAccessor) this;
         Level endLevel = server.blockEnd$getLevels().remove(Level.END);
         if (endLevel == null) {
