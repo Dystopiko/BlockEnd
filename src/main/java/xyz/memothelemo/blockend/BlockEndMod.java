@@ -5,6 +5,8 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.ComponentBuilder;
+import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.minecraft.server.level.ServerPlayer;
@@ -26,13 +28,15 @@ public class BlockEndMod implements ModInitializer {
             .maximumSize(50)
             .build();
 
-    private static final Component ALERT_MESSAGE = Component.text()
+    // We can't use `.build()` because calling it will crash the entire server.
+    //
+    // TODO: Call `.build()` once Adventure's 26.1.0 support has stabilized.
+    private static final ComponentBuilder<TextComponent, TextComponent.Builder> ALERT_MESSAGE = Component.text()
         .append(Component.text("[Dystopia] ")
                 .color(NamedTextColor.GOLD)
                 .decorate(TextDecoration.BOLD))
         .append(Component.text("End dimension is locked.")
-                .color(NamedTextColor.RED))
-        .build();
+                .color(NamedTextColor.RED));
 
     public static void sendAlertMessage(ServerPlayer player) {
         // Don't alert until their alert timeout expires.
