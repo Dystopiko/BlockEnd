@@ -25,20 +25,21 @@ dependencies {
     // To change the versions, see at `libs.versions.toml` file
     // Fabric
     minecraft(libs.minecraft)
-    implementation(libs.fabric.loader)
+    mappings(loom.officialMojangMappings())
+    modImplementation(libs.fabric.loader)
 
     // Fabric API
-    implementation(libs.fabric.api)
+    modImplementation(libs.fabric.api)
 
     // Caffeine
+    modImplementation(libs.caffeine)
     include(libs.caffeine)
-    implementation(libs.caffeine)
 
     // Adventure
+    modImplementation(libs.adventure.api)
+    modImplementation(libs.adventure.fabric)
     include(libs.adventure.api)
     include(libs.adventure.fabric)
-    implementation(libs.adventure.api)
-    implementation(libs.adventure.fabric)
 }
 
 tasks.withType(JavaCompile).configureEach {
@@ -47,7 +48,7 @@ tasks.withType(JavaCompile).configureEach {
     // see http://yodaconditions.net/blog/fix-for-java-file-encoding-problems-with-gradle.html
     // If Javadoc is generated, this must be specified in that task too.
     options.encoding = "UTF-8"
-    options.release.set(25)
+    options.release.set(21)
 }
 
 tasks.processResources {
@@ -72,8 +73,8 @@ tasks.jar {
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_25
-    targetCompatibility = JavaVersion.VERSION_25
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
     withSourcesJar()
 }
 
