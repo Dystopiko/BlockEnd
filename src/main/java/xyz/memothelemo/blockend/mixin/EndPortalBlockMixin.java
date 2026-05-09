@@ -15,7 +15,7 @@ import xyz.memothelemo.blockend.BlockEndMod;
 
 @Mixin(EndPortalBlock.class)
 public class EndPortalBlockMixin {
-    @Inject(method = "entityInside", at = @At("HEAD"))
+    @Inject(method = "entityInside", at = @At("HEAD"), cancellable = true)
     private void onEntityTouched(
             BlockState blockState,
             Level level,
@@ -25,9 +25,12 @@ public class EndPortalBlockMixin {
             boolean intersects,
             CallbackInfo ci
     ) {
+        if (BlockEndMod.allowsEntry()) {
+            return;
+        }
+
         if (entity instanceof ServerPlayer player) {
             BlockEndMod.sendAlertMessage(player);
-            return;
         }
 
         // Our good friend discovered a fatal bug in this mod where any passengers
@@ -39,5 +42,7 @@ public class EndPortalBlockMixin {
                 BlockEndMod.sendAlertMessage(player);
             }
         }
+
+        ci.cancel();
     }
 }

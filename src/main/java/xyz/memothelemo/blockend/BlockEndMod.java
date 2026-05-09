@@ -2,12 +2,17 @@ package xyz.memothelemo.blockend;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.mojang.brigadier.tree.CommandNode;
+import com.mojang.brigadier.tree.LiteralCommandNode;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Unit;
 import org.jetbrains.annotations.NotNull;
@@ -17,7 +22,11 @@ import org.slf4j.LoggerFactory;
 import java.time.Duration;
 
 public class BlockEndMod implements ModInitializer {
-    public static final Logger LOGGER = LoggerFactory.getLogger("BlockEnd");
+    private static boolean allowEntry = false;
+
+    public static boolean allowsEntry() {
+        return allowEntry;
+    }
 
     // I know using Caffeine is overkill as a way to send players alerts not too much,
     // but it is much easier to implement like this than to implement custom timer to
@@ -32,6 +41,10 @@ public class BlockEndMod implements ModInitializer {
         .append(Component.text("End dimension is locked.").color(NamedTextColor.RED))
         .build();
 
+    private static final TextComponent UNLOCKED_END = Component.text()
+        .append(Component.text("End dimension is now unlocked.").color(NamedTextColor.GREEN))
+        .build();
+
     public static void sendAlertMessage(ServerPlayer player) {
         // Don't alert until their alert timeout expires.
         String uuid = player.getStringUUID();
@@ -43,6 +56,22 @@ public class BlockEndMod implements ModInitializer {
 
     @Override
     public void onInitialize() {
+        CommandRegistrationCallback.EVENT.register((dispatcher, $, $$) -> {
+            LiteralCommandNode<CommandSourceStack> root = Commands.literal("blockend").build();
+            dispatcher.getRoot().addChild(root);
+
+            CommandNode<CommandSourceStack> unlock = Commands.literal("unlock")
+                    .requires((source) -> !source.isPlayer())
+                    .executes((ctx) -> {
+                        ctx.getSource().sendMessage(UNLOCKED_END);
+                        allowEntry = true;
+                        return 1;
+                    })
+                    .build();
+
+            root.addChild(unlock);
+        });
+
         ServerPlayerEvents.LEAVE.register((player) -> {
             PLAYERS_CACHE.invalidate(player.getStringUUID());
         });
